@@ -1,5 +1,6 @@
 package com.mambo.reservationsystem;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ public class ReservationController {
         try {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(reservationService.getReservationById(id));
-        } catch (NoSuchElementException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }

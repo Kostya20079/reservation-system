@@ -1,11 +1,9 @@
 package com.mambo.reservationsystem;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
@@ -13,22 +11,29 @@ public class ReservationService {
 
     private final Map<Long, Reservation> reservationMap;
     private final AtomicLong idCounter;
+    private final ReservationRepository repository;
 
-    public ReservationService() {
+    public ReservationService(ReservationRepository repository) {
+        this.repository = repository;
         this.reservationMap = new HashMap<>();
         this.idCounter = new AtomicLong();
     }
 
-    public Reservation getReservationById(Long id) throws NoSuchElementException {
-       if (!reservationMap.containsKey(id)) {
-           throw new NoSuchElementException("Not found reservation with id: " + id);
-       }
+    public Reservation getReservationById(Long id) {
+        ReservationEntity entity = repository.findById(id)
+               .orElseThrow(() ->
+                       new EntityNotFoundException("Not found reservation with id: " + id)
+               );
 
-       return reservationMap.get(id);
+        return convertToReservation(entity);
     }
 
     public List<Reservation> findAllReservations() {
-        return reservationMap.values().stream().toList();
+
+        List<ReservationEntity> allEntities = repository.findAll();
+
+        return allEntities.stream()
+                .map(this::convertToReservation).toList();
     }
 
     public Reservation createReservation(Reservation reservationToCreate) {
@@ -120,5 +125,16 @@ public class ReservationService {
                  .filter(res -> !reservation.reservationStatus().equals(ReservationStatus.APPROVED))
                  .anyMatch(res -> reservation.startDate().isBefore(res.startDate())
                          && res.startDate().isBefore(reservation.endDate()));
+    }
+
+    private Reservation convertToReservation(final ReservationEntity entity) {
+        return new Reservation(
+                entity.getId(),
+                entity.getUserId(),
+                entity.getRoomId(),
+                entity.getStartDate(),
+                entity.getEndDate(),
+                entity.getReservationStatus()
+        );
     }
 }
