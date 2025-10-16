@@ -44,8 +44,8 @@ public class ReservationService {
             throw new IllegalArgumentException("Status should be empty");
         }
 
-        var newReservation = new Reservation(
-                idCounter.incrementAndGet(),
+        var entityToSave = new ReservationEntity(
+                null,
                 reservationToCreate.userId(),
                 reservationToCreate.roomId(),
                 reservationToCreate.startDate(),
@@ -53,8 +53,8 @@ public class ReservationService {
                 ReservationStatus.PENDING
         );
 
-        reservationMap.put(newReservation.id(), newReservation);
-        return newReservation;
+        var savedEntity = repository.save(entityToSave);
+        return convertToReservation(savedEntity);
     }
 
     public Reservation updateReservationById(Long id, Reservation reservationToUpdate) {
